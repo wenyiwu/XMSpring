@@ -1,10 +1,11 @@
-package com.xiaoma.spring.annotation;
+package com.xiaoma.spring.framework.annotation;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE})
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Controller {
+public @interface Autowried {
     String value() default "";
+
 }

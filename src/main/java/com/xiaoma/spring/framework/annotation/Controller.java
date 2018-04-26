@@ -1,10 +1,10 @@
-package com.xiaoma.spring.annotation;
+package com.xiaoma.spring.framework.annotation;
 
 import java.lang.annotation.*;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Service {
+public @interface Controller {
     String value() default "";
 }

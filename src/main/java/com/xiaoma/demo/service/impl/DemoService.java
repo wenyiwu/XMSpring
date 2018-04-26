@@ -2,7 +2,7 @@ package com.xiaoma.demo.service.impl;
 
 
 import com.xiaoma.demo.service.IDemoService;
-import com.xiaoma.spring.annotation.Service;
+import com.xiaoma.spring.framework.annotation.Service;
 
 @Service
 public class DemoService implements IDemoService {

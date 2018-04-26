@@ -1,8 +1,9 @@
-package com.xiaoma.spring.servlet;
+package com.xiaoma.spring.framework.webmvc.servlet;
 
-import com.xiaoma.spring.annotation.Autowried;
-import com.xiaoma.spring.annotation.Controller;
-import com.xiaoma.spring.annotation.Service;
+import com.xiaoma.spring.framework.annotation.Autowried;
+import com.xiaoma.spring.framework.annotation.Controller;
+import com.xiaoma.spring.framework.annotation.Service;
+import com.xiaoma.spring.framework.context.XMApplicationContext;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DispatchServlet extends HttpServlet {
 
+    public static final String CONTEXT_CONFIG_LOCATION = "ContextConfigLocation";
     private Properties contextConfig = new Properties();
 
     //IOC容器
@@ -39,9 +41,7 @@ public class DispatchServlet extends HttpServlet {
         System.out.println("--------------------DO POST-------------");
     }
 
-
-    @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void initV1(ServletConfig config) throws ServletException {
         //开始初始化
 
         //定位
@@ -65,6 +65,12 @@ public class DispatchServlet extends HttpServlet {
         //
     }
 
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        
+        XMApplicationContext context = new XMApplicationContext(config.getInitParameter(CONTEXT_CONFIG_LOCATION));
+    }
+
     private void initHandlerMapping() {
 
     }
@@ -75,7 +81,7 @@ public class DispatchServlet extends HttpServlet {
         }
 
         for (Map.Entry<String, Object> entry : beanMap.entrySet()) {
-            Field [] fields = entry.getValue().getClass().getDeclaredFields();
+            Field[] fields = entry.getValue().getClass().getDeclaredFields();
 
             for (Field field : fields) {
                 if (!field.isAnnotationPresent(Autowried.class)) {
@@ -158,7 +164,7 @@ public class DispatchServlet extends HttpServlet {
 
     private void doScanner(String pakName) {
 
-        URL url = this.getClass().getClassLoader().getResource("/" + pakName.replaceAll("\\.","/"));
+        URL url = this.getClass().getClassLoader().getResource("/" + pakName.replaceAll("\\.", "/"));
 
         File classDir = new File(url.getFile());
 
@@ -166,7 +172,7 @@ public class DispatchServlet extends HttpServlet {
             if (file.isDirectory()) {
                 doScanner(pakName + "." + file.getName());
             } else {
-                classNames.add(pakName + "." + file.getName().replace(".class",""));
+                classNames.add(pakName + "." + file.getName().replace(".class", ""));
 
             }
         }
@@ -183,7 +189,7 @@ public class DispatchServlet extends HttpServlet {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (null != is ) {
+            if (null != is) {
                 try {
                     is.close();
                 } catch (IOException e) {
@@ -193,12 +199,14 @@ public class DispatchServlet extends HttpServlet {
         }
     }
 
-    private String lowerFirstCase(String str){
-        if (!str.isEmpty()){
-            char [] chars = str.toCharArray();
+    private String lowerFirstCase(String str) {
+        if (!str.isEmpty()) {
+            char[] chars = str.toCharArray();
             chars[0] += 32;
             return String.valueOf(chars);
         }
         return "";
     }
+
+
 }

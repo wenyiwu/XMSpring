@@ -8,7 +8,7 @@
 
     <servlet>
         <servlet-name>xmmvc</servlet-name>
-        <servlet-class>com.xiaoma.spring.servlet.DispatchServlet</servlet-class>
+        <servlet-class>com.xiaoma.spring.framework.webmvc.servlet.DispatchServlet</servlet-class>
         <init-param>
             <param-name>ContextConfigLocation</param-name>
             <param-value>classpath:application.properties</param-value>
