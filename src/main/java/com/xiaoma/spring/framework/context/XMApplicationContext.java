@@ -1,8 +1,9 @@
 package com.xiaoma.spring.framework.context;
 
-import com.xiaoma.spring.framework.annotation.Autowried;
+import com.xiaoma.spring.framework.annotation.Autowired;
 import com.xiaoma.spring.framework.annotation.Controller;
 import com.xiaoma.spring.framework.annotation.Service;
+import com.xiaoma.spring.framework.aop.XMAopConfig;
 import com.xiaoma.spring.framework.beans.BeanDefinition;
 import com.xiaoma.spring.framework.beans.BeanPostProcessor;
 import com.xiaoma.spring.framework.beans.BeanWrapper;
@@ -10,18 +11,20 @@ import com.xiaoma.spring.framework.context.support.BeanDefinitionReader;
 import com.xiaoma.spring.framework.core.BeanFactory;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class XMApplicationContext implements BeanFactory {
+public class XMApplicationContext extends XMDefaultListableBeanFactory implements BeanFactory {
 
     private String[] configLocations;
 
     private BeanDefinitionReader reader;
 
-    //保存配置信息
-    private Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<String, BeanDefinition>();
 
     //用来保证注册式单例的容器
     private Map<String, Object> beanCacheMap = new ConcurrentHashMap<String, Object>();
@@ -58,6 +61,11 @@ public class XMApplicationContext implements BeanFactory {
                 getBean(beanName);
             }
         });
+
+        beanWrapperMap.forEach((beanName, wrapper) -> {
+            populateBean(beanName, wrapper.getOriginalInstance());
+
+        });
     }
 
     public void populateBean(String beanName, Object instance) {
@@ -71,13 +79,13 @@ public class XMApplicationContext implements BeanFactory {
         Field[] fields = clazz.getDeclaredFields();
 
         for (Field field : fields) {
-            if (!field.isAnnotationPresent(Autowried.class)) {
+            if (!field.isAnnotationPresent(Autowired.class)) {
                 continue;
             }
 
-            Autowried autowried = field.getAnnotation(Autowried.class);
+            Autowired autowired = field.getAnnotation(Autowired.class);
 
-            String autowritedBeanName = autowried.value().trim();
+            String autowritedBeanName = autowired.value().trim();
 
             if ("".equals(autowritedBeanName)) {
                 autowritedBeanName = field.getType().getName();
@@ -86,11 +94,8 @@ public class XMApplicationContext implements BeanFactory {
             field.setAccessible(true);
 
             try {
-                if (beanWrapperMap.containsKey(autowritedBeanName)) {
-                    field.set(instance, this.beanWrapperMap.get(autowritedBeanName).getWrappedInstance());
-                } else {
-                    getBean(autowritedBeanName);
-                }
+                //System.out.println("=======================" +instance +"," + autowritedBeanName + "," + this.beanWrapperMap.get(autowritedBeanName).getWrappedInstance().getClass().getName());
+                field.set(instance, this.beanWrapperMap.get(autowritedBeanName).getWrappedInstance());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -170,13 +175,14 @@ public class XMApplicationContext implements BeanFactory {
 
 
             BeanWrapper beanWrapper = new BeanWrapper(instance);
+            beanWrapper.setAopConfig(instantionAopConfig(beanDefinition));
             beanWrapper.setPostProcessor(beanPostProcessor);
             this.beanWrapperMap.put(beanName, beanWrapper);
 
             //在实例初始化以后调用一次
             beanPostProcessor.postProcessorAfterInitialization(instance, beanName);
 
-            populateBean(beanName, instance);
+//            populateBean(beanName, beanWrapper.getOriginalInstance());
 
             //通过这样一调用，相当于给我们自己留有了可操作的空间
             return this.beanWrapperMap.get(beanName).getWrappedInstance();
@@ -212,4 +218,44 @@ public class XMApplicationContext implements BeanFactory {
 
         return null;
     }
+
+
+    private XMAopConfig instantionAopConfig(BeanDefinition beanDefinition) throws Exception {
+        XMAopConfig config = new XMAopConfig();
+
+        String expression = reader.getConfig().getProperty("pointCut");
+        String[] before = reader.getConfig().getProperty("aspextBefore").split("\\s");
+        String[] after = reader.getConfig().getProperty("aspextAfter").split("\\s");
+
+        String className = beanDefinition.getBeanClassName();
+
+        Class<?> clazz = Class.forName(className);
+
+        Pattern pattern = Pattern.compile(expression);
+
+        Class<?> aspextClass = Class.forName(before[0]);
+
+        for (Method m : clazz.getMethods()) {
+            Matcher matcher = pattern.matcher(m.toString());
+
+            if (matcher.matches()) {
+                config.put(m, aspextClass.newInstance(), new Method[]{aspextClass.getMethod(before[1]), aspextClass.getMethod(after[1])});
+            }
+        }
+
+        return config;
+    }
+
+    public String[] getBeanDefinitionNames() {
+        return this.beanDefinitionMap.keySet().toArray(new String[this.beanDefinitionMap.size()]);
+    }
+
+    public int getBeanDefinitionCount() {
+        return beanDefinitionMap.size();
+    }
+
+    public Properties getConfig() {
+        return this.reader.getConfig();
+    }
+
 }

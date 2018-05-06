@@ -1,5 +1,7 @@
 package com.xiaoma.spring.framework.beans;
 
+import com.xiaoma.spring.framework.aop.XMAopConfig;
+import com.xiaoma.spring.framework.aop.XMAopProxy;
 import com.xiaoma.spring.framework.core.FactoryBean;
 
 public class BeanWrapper extends FactoryBean{
@@ -9,11 +11,14 @@ public class BeanWrapper extends FactoryBean{
     private BeanPostProcessor postProcessor;
 
     private Object wrapperInstance;
+
     //通过反射new出来的，要把包装起来，存下来
     private Object originalInstance;
 
+    private XMAopProxy aopProxy = new XMAopProxy();
+
     public BeanWrapper(Object instance) {
-        this.wrapperInstance = instance;
+        this.wrapperInstance = aopProxy.getProxy(instance);
         this.originalInstance = instance;
     }
 
@@ -34,5 +39,18 @@ public class BeanWrapper extends FactoryBean{
 
     public void setPostProcessor(BeanPostProcessor postProcessor) {
         this.postProcessor = postProcessor;
+    }
+
+    public void setAopConfig(XMAopConfig config){
+        this.aopProxy.setConfig(config);
+    }
+
+
+    public Object getOriginalInstance() {
+        return originalInstance;
+    }
+
+    public void setOriginalInstance(Object originalInstance) {
+        this.originalInstance = originalInstance;
     }
 }

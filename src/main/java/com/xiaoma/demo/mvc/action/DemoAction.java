@@ -3,13 +3,14 @@ package com.xiaoma.demo.mvc.action;
 
 
 import com.xiaoma.demo.service.IDemoService;
-import com.xiaoma.spring.framework.annotation.Autowried;
+import com.xiaoma.spring.framework.annotation.Autowired;
 import com.xiaoma.spring.framework.annotation.Controller;
 import com.xiaoma.spring.framework.annotation.RequestMapping;
 import com.xiaoma.spring.framework.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Controller
 @RequestMapping("/demo")
@@ -19,8 +20,10 @@ public class DemoAction {
 		return demoService;
 	}
 
-	@Autowried
+	@Autowired
 	private IDemoService demoService;
+
+	private List l;
 	
 	@RequestMapping("/query.json")
 	public void query(HttpServletRequest req, HttpServletResponse resp,
@@ -33,7 +36,7 @@ public class DemoAction {
 //			e.printStackTrace();
 //		}
 	}
-	
+
 	@RequestMapping("/edit.json")
 	public void edit(HttpServletRequest req, HttpServletResponse resp, Integer id){
 
